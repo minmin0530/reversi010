@@ -129,6 +129,25 @@
                     true            //反時計周り
                 );
                 ctx.fill();
+
+                for (let x = 0; x < 8; ++x) {
+                    for (let y = 0; y < 8; ++y) {
+                        if (field[y][x] == turn) {
+                            ctx.beginPath();
+                            ctx.arc(
+                                x * 100 + 50, //x座標
+                                y * 100 + 50,  //y座標
+                                50,             //半径
+                                0,              //円開始
+                                Math.PI * 2,    //円終了
+                                true            //反時計周り
+                            );
+                            ctx.fill();
+
+                        }
+                    }
+                }
+                /*
                 for (let i = 0; i < 8; ++i) {
                     for (let xx = x, yy = y; xx != CONST_X[i] && yy != CONST_Y[i]; xx += ADD_X[i], yy += ADD_Y[i]) {
                         if (field[yy][xx] == turn) {
@@ -158,7 +177,7 @@
                         }
                     }
                 }
-
+*/
                 count += 1;
                 turn += 1;
                 if (turn >= PLAYER_MAX) {
