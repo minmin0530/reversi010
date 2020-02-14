@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>reversi</title>
+        <style>body{ margin: 0; }</style>
+    </head>
+    <canvas id="gamefield" width="800" height="800"></canvas>
+    <script>
+        const PLAYER_MAX = 4;
+        const COLOR_ARRAY = [
+            "rgb(0,0,0)",
+            "rgb(255,255,255)",
+            "rgb(255,0,0)",
+            "rgb(0,255,0)",
+            "rgb(0,0,255)",
+            "rgb(255,255,0)",
+            "rgb(255,0,255)",
+            "rgb(0,255,255)",
+        ];
+        window.onload = function() {
+            const canvas = document.getElementById("gamefield");
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "rgb(0,128,0)";//深緑：オセロ盤の色
+            ctx.fillRect(0,0, 800, 800);
+
+            //罫線
+            ctx.strokeStyle = "rgb(0,0,0)";
+            for (let x = 0; x < 9; ++x) {
+                ctx.beginPath();
+                ctx.moveTo(x * 100,   0);
+                ctx.lineTo(x * 100, 800);
+                ctx.closePath();
+                ctx.stroke();
+            }
+            for (let y = 0; y < 9; ++y) {
+                ctx.beginPath();
+                ctx.moveTo(  0, y * 100);
+                ctx.lineTo(800, y * 100);
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            //オセロ盤の配列を作成、-1を代入しておく
+            const field = [];
+            for (let y = 0; y < 8; ++y) {
+                field[y] = [];
+                for (let x = 0; x < 8; ++x) {
+                    field[y].push(-1);
+                }
+            }
+
+            let turn = 0;
+            let count = 0;
+
+            //枠内にコマを置く
+            window.addEventListener("mousedown", function(event){
+                const CONST_X = [ 8, -1,  8, -1,  8, -1,  8, -1];
+                const CONST_Y = [ 8,  8, -1, -1,  8, -1,  8, -1];
+                const ADD_X   = [ 1, -1,  1, -1,  1, -1,  0,  0];
+                const ADD_Y   = [ 1,  1, -1, -1,  0,  0,  1, -1];
+
+                const x0 = event.clientX - event.clientX % 100 + 50;
+                const y0 = event.clientY - event.clientY % 100 + 50;
+                const x = (x0-50)/100;
+                const y = (y0-50)/100;
+                if (field[y][x] != -1) {//既に置かれていた場合は置けないようにする
+                    return;
+                }
+
+                let beforePoint = 0;//置く前のコマの数を計算
+                for (let x = 0; x < 8; ++x) {
+                    for (let y = 0; y < 8; ++y) {
+                        if (field[y][x] == turn) {
+                            beforePoint += 1;
+                        }
+                    }
+                }
+
+
+                field[y][x] = turn;
+
+                ctx.fillStyle = COLOR_ARRAY[turn];//コマの色
+
+                for (let i = 0; i < 8; ++i) {
+                    for (let xx = x, yy = y; xx != CONST_X[i] && yy != CONST_Y[i]; xx += ADD_X[i], yy += ADD_Y[i]) {
+                        if (field[yy][xx] == turn) {
+                            let breakFlag = false;
+                            for (var xxx = x, yyy = y; (xxx != xx || ADD_X[i] == 0) && (yyy != yy || ADD_Y[i] == 0); xxx += ADD_X[i], yyy += ADD_Y[i]) {
+                                if (field[yyy][xxx] == -1) {//コマを置いてないマスがある場合、ループを抜ける
+                                    breakFlag = true;
+                                    break;
+                                }
+                            }
+                            if (breakFlag) {
+                                break;
+                            }
+
+                            for (var xxx = x, yyy = y; (xxx != xx || ADD_X[i] == 0) && (yyy != yy || ADD_Y[i] == 0); xxx += ADD_X[i], yyy += ADD_Y[i]) {
+                                field[yyy][xxx] = turn;
+                                if (field[yyy + ADD_Y[i]][xxx + ADD_X[i]] == turn) {//同じ色のコマが途中にあった場合、ループを抜ける
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let afterPoint = 0;//コマを置いた後の
+                for (let x = 0; x < 8; ++x) {
+                    for (let y = 0; y < 8; ++y) {
+                        if (field[y][x] == turn) {
+                            afterPoint += 1;
+                        }
+                    }
+                }
+
+                if (beforePoint + 1 == afterPoint && count >= PLAYER_MAX * 2) {
+                    field[y][x] = -1;
+                    return;
+                }
+
+                ctx.beginPath();
+                ctx.arc(
+                    x * 100 + 50, //x座標
+                    y * 100 + 50,  //y座標
+                    50,             //半径
+                    0,              //円開始
+                    Math.PI * 2,    //円終了
+                    true            //反時計周り
+                );
+                ctx.fill();
+                for (let i = 0; i < 8; ++i) {
+                    for (let xx = x, yy = y; xx != CONST_X[i] && yy != CONST_Y[i]; xx += ADD_X[i], yy += ADD_Y[i]) {
+                        if (field[yy][xx] == turn) {
+                            let breakFlag = false;
+                            for (var xxx = x, yyy = y; (xxx != xx || ADD_X[i] == 0) && (yyy != yy || ADD_Y[i] == 0); xxx += ADD_X[i], yyy += ADD_Y[i]) {
+                                if (field[yyy][xxx] == -1) {
+                                    breakFlag = true;
+                                    break;
+                                }
+                            }
+                            if (breakFlag) {
+                                break;
+                            }
+
+                            for (var xxx = x, yyy = y; (xxx != xx || ADD_X[i] == 0) && (yyy != yy || ADD_Y[i] == 0); xxx += ADD_X[i], yyy += ADD_Y[i]) {
+                                ctx.beginPath();
+                                ctx.arc(
+                                    xxx * 100 + 50, //x座標
+                                    yyy * 100 + 50,  //y座標
+                                    50,             //半径
+                                    0,              //円開始
+                                    Math.PI * 2,    //円終了
+                                    true            //反時計周り
+                                );
+                                ctx.fill();
+                            }
+                        }
+                    }
+                }
+
+                count += 1;
+                turn += 1;
+                if (turn >= PLAYER_MAX) {
+                    turn = 0;
+                }
+
+                console.log(field);
+
+            }, false);
+
+        };
+    </script>
+</html>
